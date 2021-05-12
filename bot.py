@@ -61,7 +61,6 @@ async def on_command_error(ctx, error):
 async def load(ctx, module):
     try:
         bot.load_extension(module)
-        args[0].extension.append(module)
         logging.info(f'Loaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
@@ -76,7 +75,6 @@ async def load(ctx, module):
 async def unload(ctx, module):
     try:
         bot.unload_extension(module)
-        args[0].extension.remove(module)
         logging.info(f'Unloaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
@@ -95,14 +93,13 @@ async def reload(ctx, module=None):
             logging.info(f'Reloaded extension {module}')
         else:
             logging.info('Reloading all extensions')
-            for extension in args[0].extension:
+            for extension in list(bot.extensions.keys()):
                 bot.reload_extension(extension.removesuffix('.py'))
                 logging.info(f'Reloaded extension {extension}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
         logging.warning(f'Failed to reload extension {module}')
         traceback.print_exc()
-        args[0].extension.remove(extension)
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -117,7 +114,7 @@ async def extensions(ctx):
 # systemd reload
 def reloader(signum, frame):
     logging.info('Reloading extensions because of SIGHUP')
-    for extension in args[0].extension:
+    for extension in list(bot.extensions.keys()):
         try:
             bot.reload_extension(extension.removesuffix('.py'))
             logging.info(f'Reloaded extension {extension}')
@@ -125,11 +122,12 @@ def reloader(signum, frame):
             logging.warning(f'Failed to reload extension {extension}')
             traceback.print_exc()
 
-# Validate extension names
-args[0].extension = [ext.replace('/', '.').removesuffix('.py') for ext in args[0].extension]
 
-# Load extensions
 if args[0].extension:
+    # Validate extension names
+    args[0].extension = [ext.replace('/', '.').removesuffix('.py') for ext in args[0].extension]
+    
+    # Load extensions
     logging.info('Extension loading')
     for extension in args[0].extension:
         try:
