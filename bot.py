@@ -109,6 +109,10 @@ async def reload(ctx, module=None):
 async def extensions(ctx):
     await ctx.send(f'Currently loaded extensions: `{"`, `".join(list(bot.extensions.keys()))}`')
 
+@bot.command(aliases=['github'], brief='Source Code')
+async def source(ctx):
+    await ctx.send('https://github.com/makesey/discord-bot')
+
 
 
 # systemd reload

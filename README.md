@@ -42,6 +42,7 @@ The default prefix is `$`. It can be changed by providing the `-p, --prefix` fla
 * `$unload` unload an extension
 * `$reload` reload an extension, reload all if no argument given
 * `$extensions` list all loaded extensions
+* `$source` link to github page
 
 ## Systemd
 
