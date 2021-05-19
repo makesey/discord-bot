@@ -61,6 +61,12 @@ Commands:
 * `$leave` Leave the game
 * `$reset` Reset the game
 
+### [misc](ext/misc.py)
+
+Commands:
+* `$coin` Flip a coin
+* `$roll` Roll a die
+
 ## Systemd
 
 To configure the bot as a sytemd-service, copy or move the file `discord-bot.service` to `/etc/systemd/system`. Replace the values for `User`, `Group`, `/path/to/bot.py` and `YOUR_TOKEN_HERE` accordingly.
