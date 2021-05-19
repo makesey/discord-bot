@@ -46,6 +46,21 @@ Owner only:
 Everyone:
 * `$source` link to github page
 
+## Extensions
+
+### [totpal](ext/totpal.py)
+
+Optional command-line arguments:  
+`-r, --reset` Game reset timer in sec. Defaults to 7200
+
+Commands:  
+* `$set` Set your article
+* `$my` Get your current article
+* `$random` Get a random article, which is not yours
+* `$players` Show the current players
+* `$leave` Leave the game
+* `$reset` Reset the game
+
 ## Systemd
 
 To configure the bot as a sytemd-service, copy or move the file `discord-bot.service` to `/etc/systemd/system`. Replace the values for `User`, `Group`, `/path/to/bot.py` and `YOUR_TOKEN_HERE` accordingly.
