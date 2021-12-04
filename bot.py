@@ -9,7 +9,7 @@ from discord.ext import commands
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--token', required=True, help='Discord Bot Token')
 parser.add_argument('-l', '--log', default='WARNING', help='Log Level. One of [DEBUG, INFO, WARNING, ERROR, CRITICAL]. Defaults to WARNING')
-parser.add_argument('-n', '--notify', action='store_true', help='Notify systemd service')
+parser.add_argument('-s', '--systemd', action='store_true', help='Bot is running as a systemd service')
 parser.add_argument('-p', '--prefix', default='$', help='Bot commands prefix')
 parser.add_argument('-e', '--extension', action='extend', nargs='*', help='Name of the python file with an discord.py extension. See https://discordpy.readthedocs.io/en/stable/ext/commands/extensions.html#ext-commands-extensions')
 args = parser.parse_known_args()
@@ -19,7 +19,7 @@ logger = logging.getLogger('discord')
 logger.propagate = False # if True, log would be printed two times in journal
 
 # systemd
-if args[0].notify:
+if args[0].systemd:
     from cysystemd.daemon import notify, Notification
     from cysystemd import journal
     logger.addHandler(journal.JournaldLogHandler())
@@ -38,7 +38,7 @@ bot = commands.Bot(command_prefix=args[0].prefix, case_insensitive=True, help_co
 # On bot ready
 @bot.event
 async def on_ready():
-    if args[0].notify:
+    if args[0].systemd:
         notify(Notification.READY)
     logger.info('Logged in as')
     logger.info(f'User: {bot.user.name}')
