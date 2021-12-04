@@ -4,7 +4,7 @@
 
 ## Requirements
 [discord.py](https://discordpy.readthedocs.io/en/stable/index.html)  
-For install instructions see [Installing](https://discordpy.readthedocs.io/en/stable/intro.html#installing)
+For install instructions see [discord.py documentation](https://discordpy.readthedocs.io/en/stable/intro.html#installing)
 
 ## Usage
 ```shell
@@ -12,14 +12,14 @@ bot.py -t TOKEN [OPTIONAL ARGUMENTS]
 ```
 
 required arguments:  
-`-t TOKEN, --token TOKEN`
+* `-t TOKEN, --token TOKEN`
 
 optional arguments:  
-`-e [EXTENSION ...], --extension [EXTENSION ...]` Name of the python file with an discord.py extension.  
-`-p PREFIX, --prefix PREFIX` Commands prefix  
-`-s, --systemd` Bot is running as a systemd service  
-`-l LOG, --log LOG` Log Level. One of [DEBUG, INFO, WARNING, ERROR, CRITICAL]. Defaults to WARNING  
-`-h, --help` show this help message and exit  
+* `-e [EXTENSION ...], --extension [EXTENSION ...]` Dot-qualified name of a python file with an discord.py extension.  
+* `-p PREFIX, --prefix PREFIX` Commands prefix  
+* `-s, --systemd` Bot is running as a systemd service  
+* `-l LOG, --log LOG` Log Level. One of [DEBUG, INFO, WARNING, ERROR, CRITICAL]. Defaults to WARNING  
+* `-h, --help` show this help message and exit  
 
 ## Extensions
 
@@ -27,11 +27,11 @@ Extra commands can be added to the bot using a discord.py extension. On startup 
 
 Once the bot is running you can load and reload extensions using commands send to the bot.
 
-For writing extensions, see [discord.py Documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/extensions.html)
+For writing extensions, see [discord.py documentation](https://discordpy.readthedocs.io/en/stable/ext/commands/extensions.html)
 
 ## Creating a Bot Account
 
-See [discord.py Documentation](https://discordpy.readthedocs.io/en/stable/discord.html)
+See [discord.py documentation](https://discordpy.readthedocs.io/en/stable/discord.html)
 
 ## Commands
 
@@ -51,7 +51,7 @@ Everyone:
 ### [totpal](ext/totpal.py)
 
 Optional command-line arguments:  
-`-r, --reset` Game reset timer in sec. Defaults to 7200
+* `-r, --reset` Game reset timer in sec. Defaults to 7200
 
 Commands:  
 * `$set` Set your article
