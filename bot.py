@@ -2,7 +2,6 @@
 import argparse
 import logging
 import signal
-import traceback
 
 from discord.ext import commands
 
@@ -67,8 +66,7 @@ async def load(ctx, module):
         logger.info(f'Loaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
-        logger.warning(f'Failed to load extension {module}')
-        traceback.print_exc()
+        logger.exception(f'Failed to load extension {module}')
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -81,8 +79,7 @@ async def unload(ctx, module):
         logger.info(f'Unloaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
-        logger.warning(f'Failed to unload extension {module}')
-        traceback.print_exc()
+        logger.exception(f'Failed to unload extension {module}')
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -101,8 +98,7 @@ async def reload(ctx, module=None):
                 logger.info(f'Reloaded extension {extension}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
-        logger.warning(f'Failed to reload extension {module}')
-        traceback.print_exc()
+        logger.exception(f'Failed to reload extension {module}')
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -126,8 +122,7 @@ def reloader(signum, frame):
             bot.reload_extension(extension.removesuffix('.py'))
             logger.info(f'Reloaded extension {extension}')
         except Exception:
-            logger.warning(f'Failed to reload extension {extension}')
-            traceback.print_exc()
+            logger.exception(f'Failed to reload extension {extension}')
 
 
 if args[0].extension:
@@ -141,8 +136,7 @@ if args[0].extension:
             bot.load_extension(extension.removesuffix('.py'))
             logger.info(f'Loaded extension {extension}')
         except Exception:
-            logger.warning(f'Failed to load extension {extension}')
-            traceback.print_exc()
+            logger.exception(f'Failed to load extension {extension}')
             args[0].extension.remove(extension)
 
 # systemd reload
