@@ -9,7 +9,7 @@ User=User
 Group=Group
 
 Nice=-1
-ExecStart=/usr/bin/python3 -u /path/to/bot.py -n -t YOUR_TOKEN_HERE
+ExecStart=/usr/bin/python3 -u /path/to/bot.py -s -t YOUR_TOKEN_HERE
 ExecReload=/bin/kill -HUP $MAINPID
 
 [Install]

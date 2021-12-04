@@ -4,7 +4,7 @@ import random
 from discord.ext import commands
 
 # Logger
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('discord.bot').getChild(__name__)
 
 class Miscellaneous(commands.Cog):
     def __init__(self, bot):

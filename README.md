@@ -17,7 +17,7 @@ required arguments:
 optional arguments:  
 * `-e [EXTENSION ...], --extension [EXTENSION ...]` Dot-qualified name of a python file with an discord.py extension.  
 * `-p PREFIX, --prefix PREFIX` Commands prefix  
-* `-n, --notify` Notify systemd service  
+* `-s, --systemd` Bot is running as a systemd service  
 * `-l LOG, --log LOG` Log Level. One of [DEBUG, INFO, WARNING, ERROR, CRITICAL]. Defaults to WARNING  
 * `-h, --help` show this help message and exit  
 
@@ -68,5 +68,7 @@ Commands:
 * `$roll` Roll a die
 
 ## Systemd
+
+Requires [cysystemd](https://pypi.org/project/cysystemd/)
 
 To configure the bot as a sytemd-service, copy or move the file `discord-bot.service` to `/etc/systemd/system`. Replace the values for `User`, `Group`, `/path/to/bot.py` and `YOUR_TOKEN_HERE` accordingly.

@@ -2,7 +2,6 @@
 import argparse
 import logging
 import signal
-import traceback
 
 from discord.ext import commands
 
@@ -10,23 +9,26 @@ from discord.ext import commands
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--token', required=True, help='Discord Bot Token')
 parser.add_argument('-l', '--log', default='WARNING', help='Log Level. One of [DEBUG, INFO, WARNING, ERROR, CRITICAL]. Defaults to WARNING')
-parser.add_argument('-n', '--notify', action='store_true', help='Notify systemd service')
+parser.add_argument('-s', '--systemd', action='store_true', help='Bot is running as a systemd service')
 parser.add_argument('-p', '--prefix', default='$', help='Bot commands prefix')
 parser.add_argument('-e', '--extension', action='extend', nargs='*', help='Name of the python file with an discord.py extension. See https://discordpy.readthedocs.io/en/stable/ext/commands/extensions.html#ext-commands-extensions')
 args = parser.parse_known_args()
 
-# systemd notifier
-if args[0].notify:
-    import sdnotify
-    notifier = sdnotify.SystemdNotifier()
-
 # Logging Config
-discord_logger = logging.getLogger('discord')
-discord_logger.setLevel(logging.WARNING)
+logger = logging.getLogger('discord').getChild('bot')
+logger.propagate = False # if True, log would be printed two times in journal
+
+# systemd
+if args[0].systemd:
+    from cysystemd.daemon import notify, Notification
+    from cysystemd import journal
+    logger.addHandler(journal.JournaldLogHandler())
+
+# Set log level
 NUMERIC_LOG_LEVEL = getattr(logging, args[0].log.upper(), None)
 if not isinstance(NUMERIC_LOG_LEVEL, int):
     raise ValueError(f'Invalid log level: {args[0].log}')
-logging.basicConfig(level=NUMERIC_LOG_LEVEL)
+logger.setLevel(NUMERIC_LOG_LEVEL)
 
 
 
@@ -36,12 +38,12 @@ bot = commands.Bot(command_prefix=args[0].prefix, case_insensitive=True, help_co
 # On bot ready
 @bot.event
 async def on_ready():
-    if args[0].notify:
-        notifier.notify('READY=1')
-    logging.info('Logged in as')
-    logging.info(f'User: {bot.user.name}')
-    logging.info(f'ID: {bot.user.id}')
-    logging.info('------------------')
+    if args[0].systemd:
+        notify(Notification.READY)
+    logger.info('Logged in as')
+    logger.info(f'User: {bot.user.name}')
+    logger.info(f'ID: {bot.user.id}')
+    logger.info('------------------')
 
 # Global command errors
 @bot.event
@@ -61,11 +63,10 @@ async def on_command_error(ctx, error):
 async def load(ctx, module):
     try:
         bot.load_extension(module)
-        logging.info(f'Loaded extension {module}')
+        logger.info(f'Loaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
-        logging.warning(f'Failed to load extension {module}')
-        traceback.print_exc()
+        logger.exception(f'Failed to load extension {module}')
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -75,11 +76,10 @@ async def load(ctx, module):
 async def unload(ctx, module):
     try:
         bot.unload_extension(module)
-        logging.info(f'Unloaded extension {module}')
+        logger.info(f'Unloaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
-        logging.warning(f'Failed to unload extension {module}')
-        traceback.print_exc()
+        logger.exception(f'Failed to unload extension {module}')
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -90,16 +90,15 @@ async def reload(ctx, module=None):
     try:
         if module:
             bot.reload_extension(module)
-            logging.info(f'Reloaded extension {module}')
+            logger.info(f'Reloaded extension {module}')
         else:
-            logging.info('Reloading all extensions')
+            logger.info('Reloading all extensions')
             for extension in list(bot.extensions.keys()):
                 bot.reload_extension(extension.removesuffix('.py'))
-                logging.info(f'Reloaded extension {extension}')
+                logger.info(f'Reloaded extension {extension}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
-        logging.warning(f'Failed to reload extension {module}')
-        traceback.print_exc()
+        logger.exception(f'Failed to reload extension {module}')
     else:
         await ctx.send(f'✅ Sucess')
 
@@ -117,14 +116,13 @@ async def source(ctx):
 
 # systemd reload
 def reloader(signum, frame):
-    logging.info('Reloading extensions because of SIGHUP')
+    logger.info('Reloading extensions because of SIGHUP')
     for extension in list(bot.extensions.keys()):
         try:
             bot.reload_extension(extension.removesuffix('.py'))
-            logging.info(f'Reloaded extension {extension}')
+            logger.info(f'Reloaded extension {extension}')
         except Exception:
-            logging.warning(f'Failed to reload extension {extension}')
-            traceback.print_exc()
+            logger.exception(f'Failed to reload extension {extension}')
 
 
 if args[0].extension:
@@ -132,14 +130,13 @@ if args[0].extension:
     args[0].extension = [ext.replace('/', '.').removesuffix('.py') for ext in args[0].extension]
     
     # Load extensions
-    logging.info('Extension loading')
+    logger.info('Extension loading')
     for extension in args[0].extension:
         try:
             bot.load_extension(extension.removesuffix('.py'))
-            logging.info(f'Loaded extension {extension}')
+            logger.info(f'Loaded extension {extension}')
         except Exception:
-            logging.warning(f'Failed to load extension {extension}')
-            traceback.print_exc()
+            logger.exception(f'Failed to load extension {extension}')
             args[0].extension.remove(extension)
 
 # systemd reload
