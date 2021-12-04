@@ -7,7 +7,7 @@ from typing import KeysView
 from discord.ext import commands
 
 # Logger
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('discord.bot').getChild(__name__)
 
 # Dummy Timer
 # needed so on_command() doesn't complain reset_timer doesn't exist

@@ -15,7 +15,7 @@ parser.add_argument('-e', '--extension', action='extend', nargs='*', help='Name 
 args = parser.parse_known_args()
 
 # Logging Config
-logger = logging.getLogger('discord')
+logger = logging.getLogger('discord').getChild('bot')
 logger.propagate = False # if True, log would be printed two times in journal
 
 # systemd
