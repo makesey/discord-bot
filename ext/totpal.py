@@ -72,13 +72,14 @@ class Totpal(commands.Cog):
     # Automatic reset
     @commands.Cog.listener()
     async def on_command(self, ctx):
-        logger.info(f'Starting new reset timer lasting {args[0].reset} seconds')
-        if self.reset_timer.is_running():
-            logger.debug('Restart reset timer')
-            self.reset_timer.restart()
-        else:
-            logger.debug('Start reset timer')
-            self.reset_timer.start()
+        if ctx.command.cog_name == self.qualified_name: # only trigger when command is from current cog
+            logger.info(f'Starting new reset timer lasting {args[0].reset} seconds')
+            if self.reset_timer.is_running():
+                logger.debug('Restart reset timer')
+                self.reset_timer.restart()
+            else:
+                logger.debug('Start reset timer')
+                self.reset_timer.start()
 
     # Reset timer
     @tasks.loop(seconds=args[0].reset, count=2)
