@@ -87,11 +87,6 @@ class Totpal(commands.Cog):
         if self.reset_timer.current_loop > 0:
             self.g.reset(auto=True)
 
-    # Ping-pong command
-    @commands.command(hidden=True)
-    async def ping(self, ctx):
-        await ctx.send('Pong')
-
     # Set article
     @commands.command(name='set', aliases=['SetMyArticle', 'sma', 'SetArticle', 'sa',], brief='Set your article', usage='Name of Article')
     @commands.dm_only()

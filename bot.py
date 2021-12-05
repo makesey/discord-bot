@@ -57,6 +57,11 @@ async def on_command_error(ctx, error):
     elif isinstance(error, commands.DisabledCommand):
         await ctx.send('Sorry. This command is disabled and cannot be used.')
 
+# Ping-pong command
+@bot.command(hidden=True)
+async def ping(ctx):
+    await ctx.send('Pong')
+
 # Manually load extension
 @bot.command(hidden=True)
 @commands.is_owner()
