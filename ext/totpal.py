@@ -1,18 +1,17 @@
 import argparse
 import logging
 import random
-from threading import Timer
 from typing import KeysView
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 # Logger
 logger = logging.getLogger('discord.bot').getChild(__name__)
 
-# Dummy Timer
-# needed so on_command() doesn't complain reset_timer doesn't exist
-reset_timer = Timer(0.0, None)
-reset_timer.name = 'Dummy timer'
+# Argument parser
+parser = argparse.ArgumentParser('totpal')
+parser.add_argument('-r', '--reset', default=7200.0, type=float, help='Game reset timer in sec. Defaults to 7200')
+args = parser.parse_known_args()
 
 # Totpal Game class
 class Game:
@@ -67,22 +66,26 @@ class Totpal(commands.Cog):
         self.g = Game()
         logger.info('Game initialized')
 
+    def cog_unload(self):
+        self.reset_timer.cancel()
+
     # Automatic reset
     @commands.Cog.listener()
     async def on_command(self, ctx):
-        global reset_timer
-        
-        # Canceling previous timer
-        logger.debug(f'Canceling reset timer {reset_timer.name}')
-        reset_timer.cancel()
+        logger.info(f'Starting new reset timer lasting {args[0].reset} seconds')
+        if self.reset_timer.is_running():
+            logger.debug('Restart reset timer')
+            self.reset_timer.restart()
+        else:
+            logger.debug('Start reset timer')
+            self.reset_timer.start()
 
-        # Create new timer
-        reset_timer = Timer(args[0].reset, self.g.reset, kwargs={'auto': True})
-        reset_timer.daemon = True # prevents program lockup when systemd sends SIGTERM
-
-        # Start new timer
-        logger.debug(f'Starting new reset timer {reset_timer.name} lasting {args[0].reset} seconds')
-        reset_timer.start()
+    # Reset timer
+    @tasks.loop(seconds=args[0].reset, count=2)
+    async def reset_timer(self):
+        logger.debug(f'Reset task fired. Current iteration {self.reset_timer.current_loop}')
+        if self.reset_timer.current_loop > 0:
+            self.g.reset(auto=True)
 
     # Ping-pong command
     @commands.command(hidden=True)
@@ -151,15 +154,5 @@ class Totpal(commands.Cog):
 
 
 def setup(bot):
-    # Argument parser
-    global parser
-    global args
-    parser = argparse.ArgumentParser('totpal')
-    parser.add_argument('-r', '--reset', default=7200.0, type=float, help='Game reset timer in sec. Defaults to 7200')
-    args = parser.parse_known_args()
-
     # Add cog
     bot.add_cog(Totpal(bot))
-
-def teardown(bot):
-    reset_timer.cancel()
