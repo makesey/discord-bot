@@ -15,14 +15,17 @@ parser.add_argument('-e', '--extension', action='extend', nargs='*', help='Name 
 args = parser.parse_known_args()
 
 # Logging Config
+discord_logger = logging.getLogger('discord')
 logger = logging.getLogger('discord').getChild('bot')
-logger.propagate = False # if True, log would be printed two times in journal
 
 # systemd
 if args[0].systemd:
     from cysystemd.daemon import notify, Notification
     from cysystemd import journal
-    logger.addHandler(journal.JournaldLogHandler())
+    
+    # if handler is atteched to root logger, all events by descendant loggers get logged
+    # see note on https://docs.python.org/3.10/library/logging.html#logging.Logger.propagate
+    discord_logger.addHandler(journal.JournaldLogHandler())
 
 # Set log level
 NUMERIC_LOG_LEVEL = getattr(logging, args[0].log.upper(), None)
@@ -38,12 +41,12 @@ bot = commands.Bot(command_prefix=args[0].prefix, case_insensitive=True, help_co
 # On bot ready
 @bot.event
 async def on_ready():
-    if args[0].systemd:
-        notify(Notification.READY)
     logger.info('Logged in as')
     logger.info(f'User: {bot.user.name}')
     logger.info(f'ID: {bot.user.id}')
-    logger.info('------------------')
+    logger.info('----------------------')
+    if args[0].systemd:
+        notify(Notification.READY)
 
 # Global command errors
 @bot.event
