@@ -26,6 +26,10 @@ if args[0].systemd:
     # if handler is atteched to root logger, all events by descendant loggers get logged
     # see note on https://docs.python.org/3.10/library/logging.html#logging.Logger.propagate
     discord_logger.addHandler(journal.JournaldLogHandler())
+else:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+    discord_logger.addHandler(handler)
 
 # Set log level
 NUMERIC_LOG_LEVEL = getattr(logging, args[0].log.upper(), None)
