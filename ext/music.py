@@ -54,17 +54,17 @@ class Music(commands.Cog):
     async def play(self, ctx, *, search):
         vc = ctx.voice_client
         
-        # Notify if already playing audio and exit
-        if vc.is_playing():
-            logger.info('Already playing audio')
-            await ctx.send('Already playing audio')
-            return
-
         # Connect to channel if not connected
         if not vc:
             logger.info('Not connect to voice. Connecting now')
             await ctx.invoke(self.connect)
             vc = ctx.voice_client
+
+        # Notify if already playing audio and exit
+        if vc.is_playing():
+            logger.info('Already playing audio')
+            await ctx.send('Already playing audio')
+            return
 
         await ctx.trigger_typing()
 
