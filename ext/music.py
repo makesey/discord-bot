@@ -11,7 +11,7 @@ logger.setLevel(logging.INFO)
 ydl_logger = logger.getChild('ydl')
 
 YDL_OPTS = {
-    'format': 'bestaudio/best',
+    'format': 'bestaudio[acodec=opus]/bestaudio/best',
     'default_search': 'ytsearch',
     'logger': ydl_logger
 }
