@@ -69,6 +69,11 @@ Commands:
 
 ### [music](ext/music.py)
 
+Requirements:
+* [discord.py[voice]](https://discordpy.readthedocs.io/en/latest/intro.html#installing)
+* [youtube-dl](https://pypi.org/project/youtube_dl/)
+* [ffmpeg](https://ffmpeg.org/download.html)
+
 Commands:
 * `$connect` Connect to a voice channel
 * `$disconnect` Disconnect from a voice channel
