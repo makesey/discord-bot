@@ -67,6 +67,16 @@ Commands:
 * `$coin` Flip a coin
 * `$roll` Roll a die
 
+### [music](ext/music.py)
+
+Commands:
+* `$connect` Connect to a voice channel
+* `$disconnect` Disconnect from a voice channel
+* `$play` Play a song
+* `$pause` Pause playback
+* `$resume` Resume playback
+* `$stop` Stop playback
+
 ## Systemd
 
 Requires [cysystemd](https://pypi.org/project/cysystemd/)
