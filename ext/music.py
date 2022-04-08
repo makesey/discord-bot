@@ -80,8 +80,16 @@ class Music(commands.Cog):
             else:
                 vid = ydl_info
 
+            logger.info('youtube-dl info:')
+            logger.info(f"\next: {vid['ext']}\nfilesize: {vid['filesize']}\ntbr: {vid['tbr']}\nacodec: {vid['acodec']}\nasr: {vid['asr']}\nabr: {vid['abr']}")
+
             # play audio
-            source = discord.FFmpegPCMAudio(vid['url'])
+            if vid['acodec'] == 'opus':
+                logger.info('Source is opus')
+                source = discord.FFmpegOpusAudio(vid['url'], codec='copy')
+            else:
+                logger.info('Source is PCM')
+                source = discord.FFmpegOpusAudio(vid['url'])
             logger.info('Playing audio')
             vc.play(source)
 
