@@ -77,7 +77,7 @@ Requirements:
 Commands:
 * `$connect` Connect to a voice channel
 * `$disconnect` Disconnect from a voice channel
-* `$play` Play a song
+* `$play` Play/Queue a song
 * `$pause` Pause playback
 * `$resume` Resume playback
 * `$stop` Stop playback

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import time
+import queue
 
 import discord
 from discord.ext import commands
@@ -24,6 +24,7 @@ YDL = YoutubeDL(YDL_OPTS)
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.queue = queue.Queue()
 
     async def get_info(self, search):
         logger.info(f'Getting video info for {search}')
@@ -53,6 +54,19 @@ class Music(commands.Cog):
 
         return source
 
+    def play_song(self, vc):
+        if self.queue.empty(): return
+
+        # Get next song
+        vid = self.queue.get()
+        logger.info(f'Getting "{vid["title"]}" from queue')
+
+        source = self.create_source(vid)
+
+        logger.info(f"Playing song {vid['title']}")
+        # after: use anonymous lambda function to run function with parameter
+        vc.play(source, after=lambda _: self.play_song(vc))
+
     # Connect
     @commands.command(brief='Connect to a voice channel')
     async def connect(self, ctx):
@@ -80,7 +94,7 @@ class Music(commands.Cog):
             logger.exception('Cannot disconnect. Bot is not in a voice channel.')
             await ctx.send('I am currently not in a voice channel')
 
-    @commands.command(brief='Play a song')
+    @commands.command(brief='Play/Queue a song', aliases=['queue'])
     async def play(self, ctx, *, search):
         vc = ctx.voice_client
         
@@ -90,33 +104,21 @@ class Music(commands.Cog):
             await ctx.invoke(self.connect)
             vc = ctx.voice_client
 
-        # Notify if already playing audio and exit
+        async with ctx.typing():
+            vid = await self.get_info(search)
+            logger.info(f'Putting "{vid["title"]}" into queue')
+            self.queue.put(vid)
+
+        # Start playing audio if not playing already
         if vc.is_playing():
-            logger.info('Already playing audio')
-            await ctx.send('Already playing audio')
-            return
-
-        try:
-            # get info from youtube-dl
-            async with ctx.typing():
-                tic = time.perf_counter()
-                vid = await self.get_info(search)
-                toc = time.perf_counter()
-                logger.info(f'get_info() took {toc-tic:.2f} seconds')
-
-            # create audio source
-            source = self.create_source(vid)
-
-            # play audio
-            logger.info('Playing audio')
-            vc.play(source)
-
-            # respond
+            embed = discord.Embed(title="", description=f"Queueing [{vid['title']}]({vid['webpage_url']}) [{ctx.author.mention}]", color=discord.Color.blue())
+        else:
+            self.play_song(vc)
             embed = discord.Embed(title="", description=f"Playing [{vid['title']}]({vid['webpage_url']}) [{ctx.author.mention}]", color=discord.Color.green())
-            await ctx.message.add_reaction('▶')
-            await ctx.send(embed=embed)
-        except Exception as e:
-            logger.exception('Something went wrong')
+
+        # respond
+        await ctx.message.add_reaction('▶')
+        await ctx.send(embed=embed)
 
     @commands.command(brief='Pause current playback')
     async def pause(self, ctx):
