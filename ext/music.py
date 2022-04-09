@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 
 import discord
 from discord.ext import commands
@@ -23,6 +24,24 @@ YDL = YoutubeDL(YDL_OPTS)
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    async def get_info(self, search):
+        logger.info(f'Getting video info for {search}')
+        # extract_info() would block the main code, consequently blocking the discord gateway heartbeat
+        # so we do it in an extra thread
+        ydl_info = await asyncio.to_thread(YDL.extract_info, search, download=False)
+
+        # get first item from playlist
+        if ydl_info['_type'] == 'playlist':
+            vid = ydl_info['entries'][0]
+        else:
+            vid = ydl_info
+
+        # log video info
+        logger.info('youtube-dl info:')
+        logger.info(f"\next: {vid['ext']}\nfilesize: {vid['filesize']}\ntbr: {vid['tbr']}\nacodec: {vid['acodec']}\nasr: {vid['asr']}\nabr: {vid['abr']}")
+
+        return vid
 
     # Connect
     @commands.command(brief='Connect to a voice channel')
@@ -70,20 +89,7 @@ class Music(commands.Cog):
         try:
             # get info from youtube-dl
             async with ctx.typing():
-                logger.info(f'Getting video info for {search}')
-                # extract_info() would block the main code, consequently blocking the discord gateway heartbeat
-                # so we do it in an extra thread
-                ydl_info = await asyncio.to_thread(YDL.extract_info, search, download=False)
-
-            # get first item from playlist
-            if ydl_info['_type'] == 'playlist':
-                vid = ydl_info['entries'][0]
-            else:
-                vid = ydl_info
-
-            # log video info
-            logger.info('youtube-dl info:')
-            logger.info(f"\next: {vid['ext']}\nfilesize: {vid['filesize']}\ntbr: {vid['tbr']}\nacodec: {vid['acodec']}\nasr: {vid['asr']}\nabr: {vid['abr']}")
+                vid = await self.get_info(search)
 
             # create audio source
             logger.info('Creating audio source')
