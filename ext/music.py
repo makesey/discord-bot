@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 import discord
@@ -66,13 +67,13 @@ class Music(commands.Cog):
             await ctx.send('Already playing audio')
             return
 
-        await ctx.trigger_typing()
-
         try:
             # get info from youtube-dl
-            logger.info(f'Getting video info for {search}')
-            ydl_info = YDL.extract_info(search, download=False)
-            logger.info('Creating audio source')
+            async with ctx.typing():
+                logger.info(f'Getting video info for {search}')
+                # extract_info() would block the main code, consequently blocking the discord gateway heartbeat
+                # so we do it in an extra thread
+                ydl_info = await asyncio.to_thread(YDL.extract_info, search, download=False)
 
             # get first item from playlist
             if ydl_info['_type'] == 'playlist':
@@ -80,16 +81,18 @@ class Music(commands.Cog):
             else:
                 vid = ydl_info
 
+            # log video info
             logger.info('youtube-dl info:')
             logger.info(f"\next: {vid['ext']}\nfilesize: {vid['filesize']}\ntbr: {vid['tbr']}\nacodec: {vid['acodec']}\nasr: {vid['asr']}\nabr: {vid['abr']}")
 
-            # play audio
+            # create audio source
+            logger.info('Creating audio source')
             if vid['acodec'] == 'opus':
-                logger.info('Source is opus')
                 source = discord.FFmpegOpusAudio(vid['url'], codec='copy')
             else:
-                logger.info('Source is PCM')
                 source = discord.FFmpegOpusAudio(vid['url'])
+
+            # play audio
             logger.info('Playing audio')
             vc.play(source)
 
