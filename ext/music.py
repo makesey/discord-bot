@@ -99,7 +99,10 @@ class Music(commands.Cog):
         try:
             # get info from youtube-dl
             async with ctx.typing():
+                tic = time.perf_counter()
                 vid = await self.get_info(search)
+                toc = time.perf_counter()
+                logger.info(f'get_info() took {toc-tic:.2f} seconds')
 
             # create audio source
             source = self.create_source(vid)
