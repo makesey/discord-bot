@@ -43,6 +43,16 @@ class Music(commands.Cog):
 
         return vid
 
+    def create_source(self, vid):
+        # create audio source
+        logger.info('Creating audio source')
+        if vid['acodec'] == 'opus':
+            source = discord.FFmpegOpusAudio(vid['url'], codec='copy')
+        else:
+            source = discord.FFmpegOpusAudio(vid['url'])
+
+        return source
+
     # Connect
     @commands.command(brief='Connect to a voice channel')
     async def connect(self, ctx):
@@ -92,11 +102,7 @@ class Music(commands.Cog):
                 vid = await self.get_info(search)
 
             # create audio source
-            logger.info('Creating audio source')
-            if vid['acodec'] == 'opus':
-                source = discord.FFmpegOpusAudio(vid['url'], codec='copy')
-            else:
-                source = discord.FFmpegOpusAudio(vid['url'])
+            source = self.create_source(vid)
 
             # play audio
             logger.info('Playing audio')
