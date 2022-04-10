@@ -118,6 +118,17 @@ class Music(commands.Cog):
         await ctx.message.add_reaction('▶')
         await ctx.send(embed=embed)
 
+    @commands.command(brief='Skip current song', aliases=['next'])
+    async def skip(self, ctx):
+        vc = ctx.voice_client
+
+        if vc.is_playing():
+            logger.info('Skipping current song')
+            vc.stop()
+            await ctx.message.add_reaction('⏭')
+        else:
+            await ctx.send("Not playing anything")
+
     @commands.command(brief='Pause current playback')
     async def pause(self, ctx):
         vc = ctx.voice_client
