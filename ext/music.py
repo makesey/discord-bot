@@ -96,13 +96,11 @@ class Music(commands.Cog):
 
     @commands.command(brief='Play/Queue a song', aliases=['queue'])
     async def play(self, ctx, *, search):
-        vc = ctx.voice_client
-        
         # Connect to channel if not connected
-        if not vc:
+        if not ctx.voice_client:
             logger.info('Not connect to voice. Connecting now')
             await ctx.invoke(self.connect)
-            vc = ctx.voice_client
+        vc = ctx.voice_client
 
         async with ctx.typing():
             vid = await self.get_info(search)
