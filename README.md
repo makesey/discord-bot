@@ -78,6 +78,8 @@ Commands:
 * `$connect` Connect to a voice channel
 * `$disconnect` Disconnect from a voice channel
 * `$play` Play/Queue a song
+* `$skip` Skip current song
+* `$shuffle` Shuffle queue
 * `$pause` Pause playback
 * `$resume` Resume playback
 * `$stop` Stop playback
