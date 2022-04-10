@@ -156,6 +156,9 @@ class Music(commands.Cog):
         vc = ctx.voice_client
 
         if vc.is_playing():
+            # Empty queue
+            self.queue = queue.Queue()
+            
             vc.stop()
             logger.info('Stopping playback')
             await ctx.message.add_reaction('⏹')
