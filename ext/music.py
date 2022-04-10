@@ -82,13 +82,11 @@ class Music(commands.Cog):
 
     @commands.command(brief='Play a song')
     async def play(self, ctx, *, search):
-        vc = ctx.voice_client
-        
         # Connect to channel if not connected
-        if not vc:
+        if not ctx.voice_client:
             logger.info('Not connect to voice. Connecting now')
             await ctx.invoke(self.connect)
-            vc = ctx.voice_client
+        vc = ctx.voice_client
 
         # Notify if already playing audio and exit
         if vc.is_playing():
