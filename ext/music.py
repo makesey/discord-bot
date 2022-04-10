@@ -1,6 +1,7 @@
 import asyncio
 from collections import deque
 import logging
+from random import shuffle
 
 import discord
 from discord.ext import commands
@@ -128,6 +129,12 @@ class Music(commands.Cog):
             await ctx.message.add_reaction('⏭')
         else:
             await ctx.send("Not playing anything")
+
+    @commands.command(brief='Shuffle queue')
+    async def shuffle(self, ctx):
+        logger.info('Shuffling queue')
+        shuffle(self.queue)
+        await ctx.message.add_reaction('🔀')
 
     @commands.command(brief='Pause current playback')
     async def pause(self, ctx):
