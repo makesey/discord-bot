@@ -1,6 +1,6 @@
 import asyncio
+from collections import deque
 import logging
-import queue
 
 import discord
 from discord.ext import commands
@@ -24,7 +24,7 @@ YDL = YoutubeDL(YDL_OPTS)
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.queue = queue.Queue()
+        self.queue = deque()
 
     async def get_info(self, search):
         logger.info(f'Getting video info for {search}')
@@ -55,10 +55,10 @@ class Music(commands.Cog):
         return source
 
     def play_song(self, vc):
-        if self.queue.empty(): return
+        if len(self.queue) == 0: return
 
         # Get next song
-        vid = self.queue.get()
+        vid = self.queue.popleft()
         logger.info(f'Getting "{vid["title"]}" from queue')
 
         source = self.create_source(vid)
@@ -105,7 +105,7 @@ class Music(commands.Cog):
         async with ctx.typing():
             vid = await self.get_info(search)
             logger.info(f'Putting "{vid["title"]}" into queue')
-            self.queue.put(vid)
+            self.queue.append(vid)
 
         # Start playing audio if not playing already
         if vc.is_playing():
@@ -157,8 +157,8 @@ class Music(commands.Cog):
 
         if vc.is_playing():
             # Empty queue
-            self.queue = queue.Queue()
-            
+            self.queue = deque()
+
             vc.stop()
             logger.info('Stopping playback')
             await ctx.message.add_reaction('⏹')
