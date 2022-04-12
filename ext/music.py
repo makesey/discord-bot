@@ -26,6 +26,7 @@ class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.queue = deque()
+        self.vc = None
 
     async def get_info(self, search):
         logger.info(f'Getting video info for {search}')
@@ -55,7 +56,7 @@ class Music(commands.Cog):
 
         return source
 
-    def play_song(self, vc):
+    def play_song(self, _):
         if len(self.queue) == 0: return
 
         # Get next song
@@ -65,8 +66,7 @@ class Music(commands.Cog):
         source = self.create_source(vid)
 
         logger.info(f"Playing song {vid['title']}")
-        # after: use anonymous lambda function to run function with parameter
-        vc.play(source, after=lambda _: self.play_song(vc))
+        self.vc.play(source, after=self.play_song)
 
     # Connect
     @commands.command(brief='Connect to a voice channel')
@@ -74,8 +74,8 @@ class Music(commands.Cog):
         try:
             voice_channel = ctx.author.voice.channel
             logger.info(f'Connecting to voice channel: {voice_channel} id={voice_channel.id}')
-            await voice_channel.connect()
-            
+            self.vc = await voice_channel.connect()
+
             # react if called directly
             if ctx.invoked_with == self.connect.name:
                 await ctx.message.add_reaction('✅')
@@ -92,9 +92,9 @@ class Music(commands.Cog):
             # Stop playback & empty queue
             await ctx.invoke(self.stop)
 
-            voice_channel = ctx.voice_client.channel
+            voice_channel = self.vc.channel
             logger.info(f'Disconnecting from voice channel: {voice_channel} id={voice_channel.id}')
-            await ctx.voice_client.disconnect()
+            await self.vc.disconnect()
             await ctx.message.add_reaction('👋')
         except AttributeError:
             logger.exception('Cannot disconnect. Bot is not in a voice channel.')
@@ -103,12 +103,10 @@ class Music(commands.Cog):
     @commands.command(brief='Play/Queue a song', aliases=['queue'])
     async def play(self, ctx, *, search):
         # Connect to channel if not connected
-        if not ctx.voice_client:
+        if not self.vc:
             logger.info('Not connect to voice. Connecting now')
             if not await ctx.invoke(self.connect):
                 return
-
-        vc = ctx.voice_client
 
         async with ctx.typing():
             vid = await self.get_info(search)
@@ -116,10 +114,10 @@ class Music(commands.Cog):
             self.queue.append(vid)
 
         # Start playing audio if not playing already
-        if vc.is_playing():
+        if self.vc.is_playing():
             embed = discord.Embed(title="", description=f"Queueing [{vid['title']}]({vid['webpage_url']}) [{ctx.author.mention}]", color=discord.Color.blue())
         else:
-            self.play_song(vc)
+            self.play_song(None)
             embed = discord.Embed(title="", description=f"Playing [{vid['title']}]({vid['webpage_url']}) [{ctx.author.mention}]", color=discord.Color.green())
 
         # respond
@@ -128,11 +126,9 @@ class Music(commands.Cog):
 
     @commands.command(brief='Skip current song', aliases=['next'])
     async def skip(self, ctx):
-        vc = ctx.voice_client
-
-        if vc.is_playing():
+        if self.vc.is_playing():
             logger.info('Skipping current song')
-            vc.stop()
+            self.vc.stop()
             await ctx.message.add_reaction('⏭')
         else:
             await ctx.send("Not playing anything")
@@ -145,10 +141,8 @@ class Music(commands.Cog):
 
     @commands.command(brief='Pause current playback')
     async def pause(self, ctx):
-        vc = ctx.voice_client
-
-        if vc.is_playing():
-            vc.pause()
+        if self.vc.is_playing():
+            self.vc.pause()
             logger.info('Pausing playback')
             await ctx.message.add_reaction('⏸')
         else:
@@ -156,10 +150,8 @@ class Music(commands.Cog):
 
     @commands.command(brief='Resume playback')
     async def resume(self, ctx):
-        vc = ctx.voice_client
-
-        if vc.is_paused():
-            vc.resume()
+        if self.vc.is_paused():
+            self.vc.resume()
             logger.info('Resuming playback')
             await ctx.message.add_reaction('▶')
         else:
@@ -170,10 +162,8 @@ class Music(commands.Cog):
         # Empty queue
         self.queue = deque()
 
-        vc = ctx.voice_client
-        if vc.is_playing():
-
-            vc.stop()
+        if self.vc.is_playing():
+            self.vc.stop()
             logger.info('Stopping playback')
             
             # react if called directly
