@@ -21,6 +21,53 @@ YDL_OPTS = {
 
 YDL = YoutubeDL(YDL_OPTS)
 
+# Checks
+async def bot_voice_connected(ctx):
+    success = False
+    if ctx.voice_client:
+        success = ctx.voice_client.is_connected()
+
+    if not success:
+        logger.info('Check failed: bot_voice_connected')
+        await ctx.send('Bot is not connected to a voice channel')
+
+    return success
+
+async def user_voice_connected(ctx):
+    success = False
+    if ctx.author.voice:
+        success = True
+
+    if not success:
+        logger.info('Check failed: user_voice_connected')
+        await ctx.send('You have to be connected to a voice channel')
+    
+    return success
+
+async def playing(ctx):
+    success = False
+    if ctx.voice_client:
+        if ctx.voice_client.is_playing():
+            success = True
+
+    if not success:
+        logger.info('Check failed: playing')
+        await ctx.send('Currently not playing anything')
+
+    return success
+
+async def paused(ctx):
+    success = False
+    if ctx.voice_client:
+        if ctx.voice_client.is_paused():
+            success = True
+
+    if not success:
+        logger.info('Check failed: voice')
+        await ctx.send('Currently not paused')
+
+    return success
+
 
 class Music(commands.Cog):
     def __init__(self, bot):
@@ -68,45 +115,37 @@ class Music(commands.Cog):
         logger.info(f"Playing song {vid['title']}")
         self.vc.play(source, after=self.play_song)
 
-    # Connect
+
+    # Commands
     @commands.command(brief='Connect to a voice channel')
+    @commands.check(user_voice_connected)
     async def connect(self, ctx):
-        try:
-            voice_channel = ctx.author.voice.channel
-            logger.info(f'Connecting to voice channel: {voice_channel} id={voice_channel.id}')
-            self.vc = await voice_channel.connect()
+        voice_channel = ctx.author.voice.channel
+        logger.info(f'Connecting to voice channel: "{voice_channel}" id={voice_channel.id}')
+        self.vc = await voice_channel.connect()
 
-            # react if called directly
-            if ctx.invoked_with == self.connect.name:
-                await ctx.message.add_reaction('✅')
-            return True
-
-        except AttributeError:
-            logger.exception('Cannot connect. No voice channel found.')
-            await ctx.send('You have to be in a voice channel for this command to work')
-            return False
+        # react if called directly
+        if ctx.invoked_with == self.connect.name:
+            await ctx.message.add_reaction('✅')
 
     @commands.command(brief='Disconnect from a voice channel')
+    @commands.check(bot_voice_connected)
     async def disconnect(self, ctx):
-        try:
             # Stop playback & empty queue
             await ctx.invoke(self.stop)
 
             voice_channel = self.vc.channel
-            logger.info(f'Disconnecting from voice channel: {voice_channel} id={voice_channel.id}')
+            logger.info(f'Disconnecting from voice channel: "{voice_channel}" id={voice_channel.id}')
             await self.vc.disconnect()
             await ctx.message.add_reaction('👋')
-        except AttributeError:
-            logger.exception('Cannot disconnect. Bot is not in a voice channel.')
-            await ctx.send('I am currently not in a voice channel')
 
     @commands.command(brief='Play/Queue a song', aliases=['queue'])
+    @commands.check(user_voice_connected)
     async def play(self, ctx, *, search):
         # Connect to channel if not connected
         if not self.vc:
             logger.info('Not connect to voice. Connecting now')
-            if not await ctx.invoke(self.connect):
-                return
+            await ctx.invoke(self.connect)
 
         async with ctx.typing():
             vid = await self.get_info(search)
@@ -125,54 +164,45 @@ class Music(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(brief='Skip current song', aliases=['next'])
+    @commands.check(playing)
     async def skip(self, ctx):
-        if self.vc.is_playing():
-            logger.info('Skipping current song')
-            self.vc.stop()
-            await ctx.message.add_reaction('⏭')
-        else:
-            await ctx.send("Not playing anything")
+        logger.info('Skipping current song')
+        self.vc.stop()
+        await ctx.message.add_reaction('⏭')
 
     @commands.command(brief='Shuffle queue')
+    @commands.check(playing)
     async def shuffle(self, ctx):
         logger.info('Shuffling queue')
         shuffle(self.queue)
         await ctx.message.add_reaction('🔀')
 
     @commands.command(brief='Pause current playback')
+    @commands.check(playing)
     async def pause(self, ctx):
-        if self.vc.is_playing():
-            self.vc.pause()
-            logger.info('Pausing playback')
-            await ctx.message.add_reaction('⏸')
-        else:
-            await ctx.send('Currently not playing audio')
+        logger.info('Pausing playback')
+        self.vc.pause()
+        await ctx.message.add_reaction('⏸')
 
     @commands.command(brief='Resume playback')
+    @commands.check(paused)
     async def resume(self, ctx):
-        if self.vc.is_paused():
-            self.vc.resume()
-            logger.info('Resuming playback')
-            await ctx.message.add_reaction('▶')
-        else:
-            await ctx.send('Cannot resume')
+        logger.info('Resuming playback')
+        self.vc.resume()
+        await ctx.message.add_reaction('▶')
 
     @commands.command(brief='Stop current playback and empty queue')
+    @commands.check_any(commands.check(playing), commands.check(paused))
     async def stop(self, ctx):
         # Empty queue
         self.queue = deque()
 
-        if self.vc.is_playing():
-            self.vc.stop()
-            logger.info('Stopping playback')
-            
-            # react if called directly
-            if ctx.invoked_with == self.stop.name:
-                await ctx.message.add_reaction('⏹')
-        else:
-            if ctx.invoked_with == self.stop.name:
-                await ctx.send('Currently not playing audio')
-
+        logger.info('Stopping playback')
+        self.vc.stop()
+        
+        # react if called directly
+        if ctx.invoked_with == self.stop.name:
+            await ctx.message.add_reaction('⏹')
 
 
 def setup(bot):
