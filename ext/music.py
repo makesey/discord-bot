@@ -87,6 +87,9 @@ class Music(commands.Cog):
     @commands.command(brief='Disconnect from a voice channel')
     async def disconnect(self, ctx):
         try:
+            # Stop playback & empty queue
+            await ctx.invoke(self.stop)
+
             voice_channel = ctx.voice_client.channel
             logger.info(f'Disconnecting from voice channel: {voice_channel} id={voice_channel.id}')
             await ctx.voice_client.disconnect()
@@ -158,19 +161,23 @@ class Music(commands.Cog):
         else:
             await ctx.send('Cannot resume')
 
-    @commands.command(brief='Stop current playback')
+    @commands.command(brief='Stop current playback and empty queue')
     async def stop(self, ctx):
-        vc = ctx.voice_client
+        # Empty queue
+        self.queue = deque()
 
+        vc = ctx.voice_client
         if vc.is_playing():
-            # Empty queue
-            self.queue = deque()
 
             vc.stop()
             logger.info('Stopping playback')
-            await ctx.message.add_reaction('⏹')
+            
+            # react if called directly
+            if ctx.invoked_with == self.stop.name:
+                await ctx.message.add_reaction('⏹')
         else:
-            await ctx.send('Currently not playing audio')
+            if ctx.invoked_with == self.stop.name:
+                await ctx.send('Currently not playing audio')
 
 
 
