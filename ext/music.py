@@ -79,10 +79,12 @@ class Music(commands.Cog):
             # react if called directly
             if ctx.invoked_with == self.connect.name:
                 await ctx.message.add_reaction('✅')
+            return True
 
         except AttributeError:
             logger.exception('Cannot connect. No voice channel found.')
             await ctx.send('You have to be in a voice channel for this command to work')
+            return False
 
     @commands.command(brief='Disconnect from a voice channel')
     async def disconnect(self, ctx):
@@ -103,7 +105,9 @@ class Music(commands.Cog):
         # Connect to channel if not connected
         if not ctx.voice_client:
             logger.info('Not connect to voice. Connecting now')
-            await ctx.invoke(self.connect)
+            if not await ctx.invoke(self.connect):
+                return
+
         vc = ctx.voice_client
 
         async with ctx.typing():
