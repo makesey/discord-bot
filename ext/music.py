@@ -4,7 +4,7 @@ import logging
 from random import shuffle
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from youtube_dl import YoutubeDL
 
 
@@ -20,6 +20,9 @@ YDL_OPTS = {
 }
 
 YDL = YoutubeDL(YDL_OPTS)
+
+# tasks event loop
+loop = asyncio.get_event_loop()
 
 # Checks
 async def bot_voice_connected(ctx):
@@ -104,7 +107,14 @@ class Music(commands.Cog):
         return source
 
     def play_song(self, _):
-        if len(self.queue) == 0: return
+        if len(self.queue) == 0:
+            # start auto disconnect task
+            logger.info('Start auto_disconnect timer')
+            self.auto_disconnect.start()
+            return
+
+        # cancel auto_disconnect if running
+        self.auto_disconnect.cancel()
 
         # Get next song
         vid = self.queue.popleft()
@@ -115,6 +125,14 @@ class Music(commands.Cog):
         logger.info(f"Playing song {vid['title']}")
         self.vc.play(source, after=self.play_song)
 
+
+    # Tasks
+    @tasks.loop(minutes=5.0, count=2, loop=loop)
+    async def auto_disconnect(self):
+        # only run on second loop
+        if self.auto_disconnect.current_loop > 0:
+            logger.info('Auto-Disconnect')
+            await self.vc.disconnect()
 
     # Commands
     @commands.command(brief='Connect to a voice channel')
@@ -137,7 +155,9 @@ class Music(commands.Cog):
             voice_channel = self.vc.channel
             logger.info(f'Disconnecting from voice channel: "{voice_channel}" id={voice_channel.id}')
             await self.vc.disconnect()
-            await ctx.message.add_reaction('👋')
+            # add reaction if invoked directly
+            if ctx.invoked_with == self.stop.name:
+                await ctx.message.add_reaction('👋')
 
     @commands.command(brief='Play/Queue a song', aliases=['queue'])
     @commands.check(user_voice_connected)
