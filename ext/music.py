@@ -75,7 +75,7 @@ async def paused(ctx):
 class Music(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.queue = deque()
+        self.song_queue = deque()
         self.vc = None
 
     async def get_info(self, search):
@@ -107,7 +107,7 @@ class Music(commands.Cog):
         return source
 
     def play_song(self, _):
-        if len(self.queue) == 0:
+        if len(self.song_queue) == 0:
             # start auto disconnect task
             logger.info('Start auto_disconnect timer')
             self.auto_disconnect.start()
@@ -117,13 +117,14 @@ class Music(commands.Cog):
         self.auto_disconnect.cancel()
 
         # Get next song
-        vid = self.queue.popleft()
+        vid = self.song_queue.popleft()
         logger.info(f'Getting "{vid["title"]}" from queue')
 
         source = self.create_source(vid)
 
         logger.info(f"Playing song {vid['title']}")
         self.vc.play(source, after=self.play_song)
+        self.current_song = vid
 
 
     # Tasks
@@ -159,7 +160,7 @@ class Music(commands.Cog):
             if ctx.invoked_with == self.stop.name:
                 await ctx.message.add_reaction('👋')
 
-    @commands.command(brief='Play/Queue a song', aliases=['queue'])
+    @commands.command(brief='Play/Queue a song')#, aliases=['queue'])
     @commands.check(user_voice_connected)
     async def play(self, ctx, *, search):
         # Connect to channel if not connected
@@ -169,8 +170,9 @@ class Music(commands.Cog):
 
         async with ctx.typing():
             vid = await self.get_info(search)
+            vid['requester'] = ctx.author
             logger.info(f'Putting "{vid["title"]}" into queue')
-            self.queue.append(vid)
+            self.song_queue.append(vid)
 
         # Start playing audio if not playing already
         if self.vc.is_playing():
@@ -181,6 +183,22 @@ class Music(commands.Cog):
 
         # respond
         await ctx.message.add_reaction('▶')
+        await ctx.send(embed=embed)
+
+    @commands.command(brief='Display current queue')
+    @commands.check(playing)
+    async def queue(self, ctx):
+        embed = discord.Embed(title='Queue', description=f"**Current song:** [{self.current_song['title']}]({self.current_song['webpage_url']}) [{self.current_song['requester'].mention}]", color=discord.Colour.blue())
+        song_number = 0
+
+        # add songs
+        for song in self.song_queue:
+            song_number += 1
+            if len(embed.description) < 4096:
+                embed.description += f"\n{song_number}. [{song['title']}]({song['webpage_url']}) [{song['requester'].mention}]"
+            else:
+                break
+
         await ctx.send(embed=embed)
 
     @commands.command(brief='Skip current song', aliases=['next'])
@@ -194,7 +212,7 @@ class Music(commands.Cog):
     @commands.check(playing)
     async def shuffle(self, ctx):
         logger.info('Shuffling queue')
-        shuffle(self.queue)
+        shuffle(self.song_queue)
         await ctx.message.add_reaction('🔀')
 
     @commands.command(brief='Pause current playback')
@@ -215,7 +233,7 @@ class Music(commands.Cog):
     @commands.check_any(commands.check(playing), commands.check(paused))
     async def stop(self, ctx):
         # Empty queue
-        self.queue = deque()
+        self.song_queue = deque()
 
         logger.info('Stopping playback')
         self.vc.stop()
