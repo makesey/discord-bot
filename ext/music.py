@@ -144,7 +144,6 @@ class Music(commands.Cog):
         # only run on second loop
         if self.auto_disconnect.current_loop > 0:
             logger.info('Auto-Disconnect')
-            self.queue = deque()
             if self.vc:
                 await self.vc.disconnect()
 
@@ -174,7 +173,7 @@ class Music(commands.Cog):
             if ctx.invoked_with == self.stop.name:
                 await ctx.message.add_reaction('👋')
 
-    @commands.command(brief='Play/Queue a song')#, aliases=['queue'])
+    @commands.command(brief='Play/Queue a song')
     @commands.check(user_voice_connected)
     async def play(self, ctx, *, search):
         # Connect to channel if not connected
@@ -259,7 +258,7 @@ class Music(commands.Cog):
 
         logger.info('Stopping playback')
         self.vc.stop()
-        
+
         # react if called directly
         if ctx.invoked_with == self.stop.name:
             await ctx.message.add_reaction('⏹')
