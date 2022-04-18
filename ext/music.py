@@ -215,6 +215,14 @@ class Music(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.command(brief='Clear song queue')
+    @commands.check(playing)
+    async def clear(self, ctx):
+        logger.info('Clear song queue')
+        self.song_queue = deque()
+
+        await ctx.message.add_reaction('✅')
+
     @commands.command(brief='Skip current song', aliases=['next'])
     @commands.check(playing)
     async def skip(self, ctx):
