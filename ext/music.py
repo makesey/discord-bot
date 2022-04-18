@@ -78,6 +78,12 @@ class Music(commands.Cog):
         self.song_queue = deque()
         self.vc = None
 
+    def cog_unload(self):
+        logger.info('Unload cog')
+        self.auto_disconnect.cancel()
+        self.auto_disconnect.change_interval(seconds=0.0)
+        self.auto_disconnect.start()
+
     async def get_info(self, search):
         logger.info(f'Getting video info for {search}')
         # extract_info() would block the main code, consequently blocking the discord gateway heartbeat
@@ -107,6 +113,11 @@ class Music(commands.Cog):
         return source
 
     def play_song(self, _):
+        # check if we are connected
+        # "after" call triggers after auto-disconnect already disconnected the bot
+        if not self.vc.is_connected():
+            return
+
         if len(self.song_queue) == 0:
             # start auto disconnect task
             logger.info('Start auto_disconnect timer')
@@ -133,7 +144,9 @@ class Music(commands.Cog):
         # only run on second loop
         if self.auto_disconnect.current_loop > 0:
             logger.info('Auto-Disconnect')
-            await self.vc.disconnect()
+            self.queue = deque()
+            if self.vc:
+                await self.vc.disconnect()
 
     # Commands
     @commands.command(brief='Connect to a voice channel')
@@ -156,6 +169,7 @@ class Music(commands.Cog):
             voice_channel = self.vc.channel
             logger.info(f'Disconnecting from voice channel: "{voice_channel}" id={voice_channel.id}')
             await self.vc.disconnect()
+            self.vc = None
             # add reaction if invoked directly
             if ctx.invoked_with == self.stop.name:
                 await ctx.message.add_reaction('👋')
@@ -245,3 +259,6 @@ class Music(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Music(bot))
+
+def teardown(bot):
+    bot.remove_cog('Music')
