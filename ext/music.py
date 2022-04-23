@@ -114,8 +114,10 @@ class Music(commands.Cog):
 
     def play_song(self, _):
         # check if we are connected
-        # "after" call triggers after auto-disconnect already disconnected the bot
-        if not self.vc.is_connected():
+        # "after" call even triggers after the bot has already disconnected
+        if not self.vc:
+            return
+        elif not self.vc.is_connected():
             return
 
         if len(self.song_queue) == 0:
