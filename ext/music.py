@@ -91,7 +91,7 @@ class Music(commands.Cog):
         ydl_info = await asyncio.to_thread(YDL.extract_info, search, download=False)
 
         # get first item from playlist
-        if ydl_info['_type'] == 'playlist':
+        if ydl_info.get('_type') == 'playlist':
             vid = ydl_info['entries'][0]
         else:
             vid = ydl_info
