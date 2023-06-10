@@ -4,6 +4,7 @@ import argparse
 import logging
 import signal
 
+import discord
 from discord.ext import commands
 
 # Command line arguments
@@ -40,8 +41,23 @@ logger.setLevel(NUMERIC_LOG_LEVEL)
 
 
 
+# Bot intents
+intents = discord.Intents(
+    messages = True,
+    voice_states = True
+)
+
 # Define bot
-bot = commands.Bot(command_prefix=args[0].prefix, case_insensitive=True, help_command=commands.DefaultHelpCommand(verify_checks=False, no_category='Other', sort_commands=False))
+bot = commands.Bot(
+    command_prefix = args[0].prefix,
+    case_insensitive = True,
+    help_command = commands.DefaultHelpCommand(
+        verify_checks = False,
+        no_category = 'Other',
+        sort_commands = False
+    ),
+    intents = intents
+)
 
 # On bot ready
 @bot.event
