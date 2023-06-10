@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import asyncio
 import argparse
 import logging
 import signal
@@ -74,7 +75,7 @@ async def ping(ctx):
 @commands.is_owner()
 async def load(ctx, module):
     try:
-        bot.load_extension(module)
+        await bot.load_extension(module)
         logger.info(f'Loaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
@@ -87,7 +88,7 @@ async def load(ctx, module):
 @commands.is_owner()
 async def unload(ctx, module):
     try:
-        bot.unload_extension(module)
+        await bot.unload_extension(module)
         logger.info(f'Unloaded extension {module}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
@@ -101,12 +102,12 @@ async def unload(ctx, module):
 async def reload(ctx, module=None):
     try:
         if module:
-            bot.reload_extension(module)
+            await bot.reload_extension(module)
             logger.info(f'Reloaded extension {module}')
         else:
             logger.info('Reloading all extensions')
             for extension in list(bot.extensions.keys()):
-                bot.reload_extension(extension.removesuffix('.py'))
+                await bot.reload_extension(extension.removesuffix('.py'))
                 logger.info(f'Reloaded extension {extension}')
     except Exception as e:
         await ctx.send('🛑 `{}: {}`'.format(type(e).__name__, e))
@@ -131,7 +132,7 @@ def reloader(signum, frame):
     logger.info('Reloading extensions because of SIGHUP')
     for extension in list(bot.extensions.keys()):
         try:
-            bot.reload_extension(extension.removesuffix('.py'))
+            asyncio.run(bot.reload_extension(extension.removesuffix('.py')))
             logger.info(f'Reloaded extension {extension}')
         except Exception:
             logger.exception(f'Failed to reload extension {extension}')
@@ -145,7 +146,7 @@ if args[0].extension:
     logger.info('Extension loading')
     for extension in args[0].extension:
         try:
-            bot.load_extension(extension.removesuffix('.py'))
+            asyncio.run(bot.load_extension(extension.removesuffix('.py')))
             logger.info(f'Loaded extension {extension}')
         except Exception:
             logger.exception(f'Failed to load extension {extension}')

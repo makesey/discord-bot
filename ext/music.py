@@ -78,7 +78,7 @@ class Music(commands.Cog):
         self.song_queue = deque()
         self.vc = None
 
-    def cog_unload(self):
+    async def cog_unload(self):
         logger.info('Unload cog')
         self.auto_disconnect.cancel()
         self.auto_disconnect.change_interval(seconds=0.0)
@@ -266,8 +266,8 @@ class Music(commands.Cog):
             await ctx.message.add_reaction('⏹')
 
 
-def setup(bot):
-    bot.add_cog(Music(bot))
+async def setup(bot):
+    await bot.add_cog(Music(bot))
 
-def teardown(bot):
-    bot.remove_cog('Music')
+async def teardown(bot):
+    await bot.remove_cog('Music')

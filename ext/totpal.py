@@ -66,7 +66,7 @@ class Totpal(commands.Cog):
         self.g = Game()
         logger.info('Game initialized')
 
-    def cog_unload(self):
+    async def cog_unload(self):
         self.reset_timer.cancel()
 
     # Automatic reset
@@ -149,6 +149,6 @@ class Totpal(commands.Cog):
         await ctx.send('Game reset')
 
 
-def setup(bot):
+async def setup(bot):
     # Add cog
-    bot.add_cog(Totpal(bot))
+    await bot.add_cog(Totpal(bot))
